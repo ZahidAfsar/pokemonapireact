@@ -17,9 +17,11 @@ const DisplayPageComponent = () => {
         const [pokemonNameText, setpokemonNameText] = useState<string>('');
         const [pokeID, setpokeID] = useState<string>('');
         const [pokemonType, setPokemonType] = useState<IPokeType[]>([]);
+
         const [pokeIMG, setpokeIMG] = useState<string>('');
         const [pokeLocation, setpokeLocation] = useState<string>('');
         const [pokeMoves, setpokeMoves] = useState<IPokeMoves[]>([]);
+        
         const [pokeAbilities, setpokeAbilities] = useState<IPokeAbilities[]>([]);
 
         const [pokeEvolutions, setpokeEvolutions] = useState<any>([]);
