@@ -1,3 +1,7 @@
+# Zahid Afsar
+# 3 - 17 - 24
+# Pokemon Api React Rebuild
+# Remake the old PokeIndex in React using Typscript and Tailwind
 # Peer Reviewer: Caleb Sylvia
 # Peer Review: Everything looks good and works as it should, the only issue is that there are bunch of type anys but that shouldn't take too long to fix. Great Job!
 
