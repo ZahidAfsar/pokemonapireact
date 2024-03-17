@@ -1,3 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: PottaOne;
+  src: url(../src/Components/assets/PottaOne-Regular.ttf);
+}
+
+@font-face {
+  font-family: Manjari;
+  src: url(../src/Components/assets/Manjari-Regular.ttf);
+}
+
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
