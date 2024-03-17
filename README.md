@@ -1,3 +1,9 @@
+# Peer Reviewer: Caleb Sylvia
+# Peer Review: Everything looks good and works as it should, the only issue is that there are bunch of type anys but that shouldn't take too long to fix. Great Job!
+
+
+
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
