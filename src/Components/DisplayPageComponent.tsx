@@ -3,35 +3,36 @@ import pokeball from '../Components/assets/pokeball.png'
 import testImg from '../Components/assets/testIMG.png'
 import { useState, useEffect } from 'react'
 import { Button, Modal } from 'flowbite-react';
-import { pokeLocationFetch, getPokeEvolutionsFetch, getPokeFetch, getPokeName } from '../DataService/DataService'
-import { IPokeAbilities, IPokeMoves, IPokeType } from '../Interfaces/Interface';
+import { getPokeFetch, getPokeName, pokeLocationFetch, getPokeEvolutionsFetch } from '../DataService/DataService'
+import { IPokeAbilities, IPokeMoves, IPokeType, ILocationData, IPokeSpecies, Chain, IEvolutionData, IPokemonData  } from '../Interfaces/Interface';
 
 
 
 const DisplayPageComponent = () => {
 
-
-
-        const [dataPokemon, setDataPokemon] = useState<any>([]);
-
-        const [pokemonNameText, setpokemonNameText] = useState<string>('');
-        const [pokeID, setpokeID] = useState<string>('');
-        const [pokemonType, setPokemonType] = useState<IPokeType[]>([]);
-
-        const [pokeIMG, setpokeIMG] = useState<string>('');
-        const [pokeLocation, setpokeLocation] = useState<string>('');
-        const [pokeMoves, setpokeMoves] = useState<IPokeMoves[]>([]);
-        
-        const [pokeAbilities, setpokeAbilities] = useState<IPokeAbilities[]>([]);
-
-        const [pokeEvolutions, setpokeEvolutions] = useState<any>([]);
         const [searchInput, setsearchInput] = useState<string>('1');
-        const [savedInput, setSavedInput] = useState<string>('1');
+        const [savedDataInput, setsavedDataInput] = useState<string>('1');
 
         const [localStorageItems, setLocalStorageItems] = useState<string>('1');
+
         const [addToFavs, setaddToFavs] = useState<string>('hidden');
-        const [favoriteDisplay, setFavoriteDisplay] = useState<any>([]);
-    
+        const [favoriteDisplay, setFavoriteDisplay] = useState<IPokemonData[]>([]);
+
+        const [dataPokemon, setDataPokemon] = useState<IPokemonData>();
+
+        const [pokemonNameText, setpokemonNameText] = useState<string>('');
+        const [pokeID, setpokeID] = useState<number>(0);
+        const [pokemonType, setPokemonType] = useState<IPokeType[]>([]);
+
+        const [pokeLocation, setpokeLocation] = useState<string>('');
+        const [pokeMoves, setpokeMoves] = useState<IPokeMoves[]>([]);
+
+        const [pokeAbilities, setpokeAbilities] = useState<IPokeAbilities[]>([]);
+
+        const [pokeEvolutions, setpokeEvolutions] = useState<IPokemonData[]>([]);
+
+        const [pokeIMG, setpokeIMG] = useState<string>('');
+        
         const [onLoad, setOnLoad] = useState<boolean>(true);
         
         useEffect(() => {
@@ -39,67 +40,74 @@ const DisplayPageComponent = () => {
             getLocalStorage();
 
             const getPokeFetchData = async () => {
-                const pokemonData = await getPokeFetch(savedInput);
-                console.log(pokemonData);
-                const callName = await getPokeName(savedInput);
-                const pokeLocation = await pokeLocationFetch(savedInput);
+                const pokemonData: IPokemonData = await getPokeFetch(savedDataInput);
+
+                if (pokemonData.id > 649) {
+                    alert("Gen 1 to 5");
+                }else{
+
+                const PokeCall:IPokeSpecies = await getPokeName(savedDataInput);
+
+                const pokeLocation: ILocationData[] = await pokeLocationFetch(savedDataInput);
+
                 setLocalStorageItems(`${pokemonData.id}`);
+
                 setDataPokemon(pokemonData);
                 setPokemonType(pokemonData.types);
-                setpokemonNameText(callName.name[0].toUpperCase()+callName.name.substring(1));
+                setpokemonNameText(PokeCall.name[0].toUpperCase()+PokeCall.name.substring(1));
                 setpokeID(pokemonData.id);
+                
                 setpokeIMG(pokemonData.sprites.other["official-artwork"].front_default);
                 setpokeMoves(pokemonData.moves);
                 setpokeAbilities(pokemonData.abilities);
+
                 if(pokeLocation.length === 0){
                     setpokeLocation('N/A');
                 }else{
                     setpokeLocation(pokeLocation[0].location_area.name.split("-").join(" "));
                 }
-    
-            }
-        
-            // if (pokemonData.id > 649) {
-            //     alert("Gen 1 to 5");
-            // }
+                
+                let evoArray:IPokemonData[] = [];
+                let evolPoke:string[] = [];
 
-    
-            const pokemonEvolution = async () => {
-                let evoArray:any = [];
-                let pokeEvolution:string[] = [];
-                const data2 = await getPokeEvolutionsFetch(savedInput);
-                let evolutionPush = data2.chain.species.url;
+                const dataOne: IEvolutionData = await getPokeEvolutionsFetch(savedDataInput);
+
+                let evolutionPush: string = dataOne.chain.species.url;
                 let evolutionPush2 = evolutionPush.substring(42, 50);
     
-                pokeEvolution.push(evolutionPush2.slice(0, -1));
-                if(data2.chain.evolves_to !== null){
-                    data2.chain.evolves_to.map((evolution:any) => {
-                        pokeEvolution.push(evolution.species.url.substring(42, 50).slice(0, -1));
-                        return pokeEvolution;
+                evolPoke.push(evolutionPush2.slice(0, -1));
+                if(dataOne.chain.evolves_to !== null)
+                {
+                    dataOne.chain.evolves_to.map((evolution:Chain) => {
+                        evolPoke.push(evolution.species.url.substring(42, 50).slice(0, -1));
+                        return evolPoke;
                     });
-                    if(data2.chain.evolves_to.length !== 0 && data2.chain.evolves_to.length !== 0){
-                        data2.chain.evolves_to[0].evolves_to.map((evolution:any) => {
-                            pokeEvolution.push(evolution.species.url.substring(42, 50).slice(0, -1));
-                            return pokeEvolution;
+
+                    if(dataOne.chain.evolves_to.length !== 0 && dataOne.chain.evolves_to.length !== 0)
+                    {
+                        dataOne.chain.evolves_to[0].evolves_to.map((evolution:Chain) => {
+                            evolPoke.push(evolution.species.url.substring(42, 50).slice(0, -1));
+                            return evolPoke;
                         });
                     }
                 }
     
-                for(let i = 0; i<pokeEvolution.length; i++){
-                    const promise:any = await getPokeFetch(pokeEvolution[i]);
+                for(let i = 0; i < evolPoke.length; i++)
+                {
+                    const promise:IPokemonData = await getPokeFetch(evolPoke[i]);
                     evoArray.push(promise);
                 }
                 setpokeEvolutions(evoArray);
                 return pokeEvolutions;
-    
+                }
             }
     
             const pokemonFavorites = async() => {
                 let favorites:string[] = getLocalStorage();
-                let favArray:any = [];
+                let favArray:IPokemonData[] = [];
     
-                for(let i = 0; i<favorites.length; i++){
-                    const promise:any = await getPokeFetch(favorites[i]);
+                for(let i = 0; i < favorites.length; i++){
+                    const promise:IPokemonData = await getPokeFetch(favorites[i]);
                     favArray.push(promise);
                 }
                 setFavoriteDisplay(favArray);
@@ -108,63 +116,62 @@ const DisplayPageComponent = () => {
             }
             
             getPokeFetchData();
-            pokemonEvolution();
             pokemonFavorites();
             setsearchInput('');
     
         }, [onLoad])
     
-    
-        const shinyPokemon = async() => {
-            const pokemonData:any = await getPokeFetch(savedInput);
-            if(pokeIMG === pokemonData.sprites.other["official-artwork"].front_default){
-                setpokeIMG(pokemonData.sprites.other["official-artwork"].front_shiny);
-            }else{
-                setpokeIMG(pokemonData.sprites.other["official-artwork"].front_default);
-            }
-        }
-    
         const randomPokemon = () => {
             let random:number = Math.floor(Math.random() * 649) + 1;
-            setSavedInput(`${random}`);
+            setsavedDataInput(`${random}`);
         }
     
-        const openFavorites = () => {
-            if(addToFavs === 'hidden'){
+        const accessFavorites = () => {
+            if(addToFavs === 'hidden')
+            {
                 setaddToFavs('');
             }else {
                 setaddToFavs('hidden');
             }
         }
     
-        const handleFavorites = () => {
-            if(!getLocalStorage().includes(`${dataPokemon.id}`)){
+        const manageFavorites = () => {
+
+            if(!getLocalStorage().includes(`${dataPokemon && dataPokemon.id}`))
+            {
                 saveToLocalStorage(localStorageItems);
                 alert("added to favorite pokemon")
+
             }else{
+
                 removeFromLocalStorage(localStorageItems);
                 alert("Removed from favorite pokemon");
+
             }
         }
     
         const onLoadPage = () => {
+
             setOnLoad(!onLoad);
+
         }
     
         const saveToLocalStorage = (pokemon:string) => {
             let favorites:string[] = getLocalStorage();
         
-            if(!favorites.includes(pokemon)){
+            if(!favorites.includes(pokemon))
+            {
                 favorites.push(pokemon);
             }
         
-            localStorage.setItem("Favorite Pokemon", JSON.stringify(favorites));
+            localStorage.setItem("MyFavorites", JSON.stringify(favorites));
         }
         
         const getLocalStorage = () => {
-            let localStorageData = localStorage.getItem("Favorite Pokemon");
+            let localStorageData = localStorage.getItem("MyFavorites");
         
-            if(localStorageData == null){
+            if(localStorageData == null)
+            {
                 return [];
             }
         
@@ -179,13 +186,23 @@ const DisplayPageComponent = () => {
         
             favorites.splice(namedIndex, 1);
         
-            localStorage.setItem("Favorite Pokemon", JSON.stringify(favorites));
+            localStorage.setItem("MyFavorites", JSON.stringify(favorites));
         
         }
 
+        const shinyPokemon = async() => {
+
+            const pokemonData:IPokemonData = await getPokeFetch(savedDataInput);
+
+            if(pokeIMG === pokemonData.sprites.other["official-artwork"].front_default)
+            {
+                setpokeIMG(pokemonData.sprites.other["official-artwork"].front_shiny);
+            }else{
+                setpokeIMG(pokemonData.sprites.other["official-artwork"].front_default);
+            }
+        }
+
     
-
-
   return (
     <>
   {/*Top Logo  */}
@@ -203,26 +220,25 @@ const DisplayPageComponent = () => {
   <div className="container-fluid hidden lg:block p-16">
     <div className="div flex">
       <div className="mb-6 flex mr-2">
-        <input onChange={(e)=> setsearchInput(e.target.value)} onKeyDown={(e: React.KeyboardEvent<HTMLInputElement> | React.ChangeEvent<HTMLInputElement>) => {if((e as React.KeyboardEvent<HTMLInputElement>).key === "Enter"){
-                setsearchInput((e as React.ChangeEvent<HTMLInputElement>).target.value)
+        <input onChange={(e)=> setsearchInput(e.target.value)} onKeyDown={(e: React.KeyboardEvent<HTMLInputElement> | React.ChangeEvent<HTMLInputElement>) => {if((e as React.KeyboardEvent<HTMLInputElement>).key === "Enter")
+        {
+            setsearchInput((e as React.ChangeEvent<HTMLInputElement>).target.value)
+
                 if(searchInput !== ''){
-                    setSavedInput(searchInput);
+                    setsavedDataInput(searchInput);
                 }
                 onLoadPage();
+
             }
             }} value={searchInput} 
+
           type="text"
           placeholder="Pokemon Name or Num"
           className="bg-gray-50 border border-gray-700 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 min-w-96 "
         />
       </div>
       <div className="div flex-">
-        <button onClick={() => {
-            if(searchInput !== ''){
-                setSavedInput(searchInput);
-            }
-            onLoadPage();
-        }}
+        <button onClick={() => { if(searchInput !== '') { setsavedDataInput(searchInput); } onLoadPage(); }}
           type="button" 
           className="text-gray-900 hover:text-white border border-gray-800 hover:bg-gray-900 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:border-gray-600 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-gray-800"
         >
@@ -238,7 +254,7 @@ const DisplayPageComponent = () => {
         </button>
       </div>
       <div className="text-center flex-">
-        <button className="text-red-700 hover:text-white border border-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2  dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:hover:bg-red-600 dark:focus:ring-red-900" onClick={openFavorites}>Favorites</button>
+        <button className="text-red-700 hover:text-white border border-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2  dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:hover:bg-red-600 dark:focus:ring-red-900" onClick={accessFavorites}>Favorites</button>
       </div>
     </div>
   </div>
@@ -246,12 +262,16 @@ const DisplayPageComponent = () => {
   <div className="container-fluid hidden lg:hidden sm:block  p-16 ">
     <div className="div flex justify-center">
       <div className="mb-6 flex mr-2">
-        <input onChange={(e)=> setsearchInput(e.target.value)} onKeyDown={(e: React.KeyboardEvent<HTMLInputElement> | React.ChangeEvent<HTMLInputElement>) => {if((e as React.KeyboardEvent<HTMLInputElement>).key === "Enter"){
-                setsearchInput((e as React.ChangeEvent<HTMLInputElement>).target.value)
-                if(searchInput !== ''){
-                    setSavedInput(searchInput);
+        <input onChange={(e)=> setsearchInput(e.target.value)} onKeyDown={(e: React.KeyboardEvent<HTMLInputElement> | React.ChangeEvent<HTMLInputElement>) => {if((e as React.KeyboardEvent<HTMLInputElement>).key === "Enter")
+        {
+            setsearchInput((e as React.ChangeEvent<HTMLInputElement>).target.value)
+
+                if(searchInput !== '')
+                {
+                    setsavedDataInput(searchInput);
                 }
                 onLoadPage();
+
             }
             }} value={searchInput} 
           type="text"
@@ -261,11 +281,7 @@ const DisplayPageComponent = () => {
       </div>
       <div className="div flex-">
         <button onClick={() => {
-            if(searchInput !== ''){
-                setSavedInput(searchInput);
-            }
-            onLoadPage();
-        }}
+            if(searchInput !== ''){ setsavedDataInput(searchInput); } onLoadPage(); }}
           type="button"
           className="text-gray-900 hover:text-white border border-gray-800 hover:bg-gray-900 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:border-gray-600 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-gray-800"
         >
@@ -283,7 +299,7 @@ const DisplayPageComponent = () => {
         </button>
       </div>
       <div className="text-center pl-52 flex-1">
-      <button className="text-red-700 hover:text-white border border-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2  dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:hover:bg-red-600 dark:focus:ring-red-900"  onClick={openFavorites} >Favorites</button>
+      <button className="text-red-700 hover:text-white border border-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2  dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:hover:bg-red-600 dark:focus:ring-red-900"  onClick={accessFavorites} >Favorites</button>
       </div>
     </div>
   </div>
@@ -291,13 +307,19 @@ const DisplayPageComponent = () => {
   <div className="container-fluid block sm:hidden p-16">
     <div className="div flex justify-center">
       <div className="mb-6 flex mr-2">
-        <input onChange={(e)=> setsearchInput(e.target.value)} onKeyDown={(e: React.KeyboardEvent<HTMLInputElement> | React.ChangeEvent<HTMLInputElement>) => {if((e as React.KeyboardEvent<HTMLInputElement>).key === "Enter"){
+        <input onChange={(e)=> setsearchInput(e.target.value)} onKeyDown={(e: React.KeyboardEvent<HTMLInputElement> | React.ChangeEvent<HTMLInputElement>) => { 
+            if((e as React.KeyboardEvent<HTMLInputElement>).key === "Enter")
+            {
                 setsearchInput((e as React.ChangeEvent<HTMLInputElement>).target.value)
-                if(searchInput !== ''){
-                    setSavedInput(searchInput);
+
+                if(searchInput !== '')
+                {
+                    setsavedDataInput(searchInput);
                 }
                 onLoadPage();
+
             }
+
             }} value={searchInput} 
           type="text"
           placeholder="Pokemon Name or Num"
@@ -308,11 +330,7 @@ const DisplayPageComponent = () => {
     <div className="div flex justify-center">
       <div className="div flex">
         <button onClick={() => {
-            if(searchInput !== ''){
-                setSavedInput(searchInput);
-            }
-            onLoadPage();
-        }}
+            if(searchInput !== ''){ setsavedDataInput(searchInput); } onLoadPage(); }}
           type="button"
           className="text-gray-900 hover:text-white border border-gray-800 hover:bg-gray-900 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:border-gray-600 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-gray-800"
         >
@@ -328,7 +346,7 @@ const DisplayPageComponent = () => {
         </button>
       </div>
       <div className="text-center flex">
-      <button className="text-red-700 hover:text-white border border-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2  dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:hover:bg-red-600 dark:focus:ring-red-900"  onClick={openFavorites} >Favorites</button>
+      <button className="text-red-700 hover:text-white border border-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2  dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:hover:bg-red-600 dark:focus:ring-red-900"  onClick={accessFavorites} >Favorites</button>
       </div>
     </div>
   </div>
@@ -361,7 +379,7 @@ const DisplayPageComponent = () => {
             </h1>
             <h1 className="font-PottaOne text-black text-2xl pt-8">Moves:</h1>
             <h1 className="font-PottaOne text-black text-2xl pt-20">
-              Evolutions:
+              Evolutions: <span>&#x2191;</span> and <span>&#x2193;</span> Scroll
             </h1>
           </div>
           <div className="overflow-hidden flex-1 pl-28 pt-24">
@@ -369,9 +387,11 @@ const DisplayPageComponent = () => {
             {pokemonType.map((type:IPokeType, idx:number) => {
                     return (
                         <>
-                           {<span key={idx}>{`${type.type.name[0].toUpperCase()+type.type.name.substring(1)}`}
+                           {
+                            <span key={idx}>{`${type.type.name[0].toUpperCase()+type.type.name.substring(1)}`}
                            {idx !== pokemonType.length - 1 && ', '}
-                           </span>}
+                           </span>
+                           }
                         </>
                     )
                 })}</p>
@@ -382,8 +402,10 @@ const DisplayPageComponent = () => {
             {pokeAbilities.map((ability:IPokeAbilities, idx:number) => {
                             return(
                                 <>
-                                {<span key={idx}>{`${ability.ability.name}`}
-                                {idx !== pokeAbilities.length - 1 && ', '}</span>}
+                                {
+                                <span key={idx}>{`${ability.ability.name}`}
+                                {idx !== pokeAbilities.length - 1 && ', '}</span>
+                                }
                                 </>
                             )
                         })}</p>
@@ -391,8 +413,10 @@ const DisplayPageComponent = () => {
             {pokeMoves.map((move:IPokeMoves, idx:number) => {
                                 return (
                                     <>
-                                    {<span key={idx}>{`${move.move.name}`}
-                                    {idx !== pokeMoves.length - 1 && ', '}</span>}
+                                    {
+                                    <span key={idx}>{`${move.move.name}`}
+                                    {idx !== pokeMoves.length - 1 && ', '}</span>
+                                    }
                                     </>
                                 )
                         })}</p>
@@ -401,12 +425,12 @@ const DisplayPageComponent = () => {
         <div className="pt-10 w-full">
           <div className="h-56 overflow-x-auto">
             <div className="w-1/3 text-center">
-              <p className="font-PottaOne">{pokeEvolutions.map((pokemon:any, idx:number)=> {
+              <p className="font-PottaOne">{pokeEvolutions.map((pokemon:IPokemonData, idx:number)=> {
                 return(
                     <>
                         <div key={idx}>
                             <div>
-                                <img src={pokemon.sprites.other["official-artwork"].front_default} style={{height: '200px', width: '200px', cursor: 'pointer'}} alt='pokemon evolutions'/>
+                                <img src={pokemon.sprites.other["official-artwork"].front_default} style={{height: '200px', width: '200px'}} alt='Pokemon Evols'/>
                             </div>
                             <div className='text-center'>
                                 {`${pokemon.name[0].toUpperCase()}${pokemon.name.substring(1)}`}
@@ -414,7 +438,8 @@ const DisplayPageComponent = () => {
                         </div>
                     </>
                 )
-            })}</p>
+            })}
+            </p>
             </div>
             <div className="w-1/3 flex justify-center"></div>
           </div>
@@ -433,10 +458,7 @@ const DisplayPageComponent = () => {
           <h1 className="font-PottaOne text-black text-3xl pb-5">{pokemonNameText}</h1>
           <h1 className="font-PottaOne text-black text-3xl pb-36">{pokeID}</h1>
           <button>
-            <img onClick={()=> {
-                        handleFavorites();
-                        onLoadPage();
-                        }}
+            <img onClick={()=> { manageFavorites(); onLoadPage(); }}
               className="h-32 hover:scale-110 w-32"
               src={pokeball}
               alt="AddtoFavBtn"
@@ -463,10 +485,7 @@ const DisplayPageComponent = () => {
       />
       <div className="flex justify-center">
         <button className="flex justify-center">
-          <img onClick={()=> {
-                        handleFavorites();
-                        onLoadPage();
-                        }}
+          <img onClick={()=> { manageFavorites(); onLoadPage(); }}
             className="h-32 w-32 hover:scale-110 flex justify-center"
             src={pokeball}
             alt="AddtoFavBtn"
@@ -479,10 +498,7 @@ const DisplayPageComponent = () => {
   <div className="container-fluid hidden lg:block">
     <div className="div pb-2 flex justify-center">
       <button>
-        <img onClick={()=> {
-                        handleFavorites();
-                        onLoadPage();
-                        }}
+        <img onClick={()=> { manageFavorites(); onLoadPage(); }}
           className="h-32 hover:scale-110 w-32"
           src={pokeball}
           alt="AddtoFavBtn"
@@ -504,7 +520,7 @@ const DisplayPageComponent = () => {
           <h1 className="font-PottaOne text-black text-2xl pt-8">Ablities:</h1>
           <h1 className="font-PottaOne text-black text-2xl pt-8">Moves:</h1>
           <h1 className="font-PottaOne text-black text-2xl pt-20">
-            Evolutions:
+            Evolutions: <span>&#x2191;</span> and <span>&#x2193;</span> Scroll
           </h1>
         </div>
         <div className="overflow-hidden flex-1 pl-28 pt-24">
@@ -512,9 +528,11 @@ const DisplayPageComponent = () => {
           {pokemonType.map((type:IPokeType, idx:number) => {
                     return (
                         <>
-                           {<span key={idx}>{`${type.type.name[0].toUpperCase()+type.type.name.substring(1)}`}
+                           {
+                            <span key={idx}>{`${type.type.name[0].toUpperCase()+type.type.name.substring(1)}`}
                            {idx !== pokemonType.length - 1 && ', '}
-                           </span>}
+                           </span>
+                           }
                         </>
                     )
                 })}
@@ -526,8 +544,10 @@ const DisplayPageComponent = () => {
           {pokeAbilities.map((ability:IPokeAbilities, idx:number) => {
                             return(
                                 <>
-                                {<span key={idx}>{`${ability.ability.name}`}
-                                {idx !== pokeAbilities.length - 1 && ', '}</span>}
+                                {
+                                <span key={idx}>{`${ability.ability.name}`}
+                                {idx !== pokeAbilities.length - 1 && ', '}</span>
+                                }
                                 </>
                             )
                         })}
@@ -536,8 +556,10 @@ const DisplayPageComponent = () => {
           {pokeMoves.map((move:IPokeMoves, idx:number) => {
                                 return (
                                     <>
-                                    {<span key={idx}>{`${move.move.name}`}
-                                    {idx !== pokeMoves.length - 1 && ', '}</span>}
+                                    {
+                                    <span key={idx}>{`${move.move.name}`}
+                                    {idx !== pokeMoves.length - 1 && ', '}</span>
+                                    }
                                     </>
                                 )
                         })}
@@ -547,12 +569,12 @@ const DisplayPageComponent = () => {
       <div className="pt-10 overflow-x-auto overflow-auto">
         <div className="h-56 w-full flex text-base sm:text-lg md:text-xl lg:text-lg xl:text-2xl">
           <div className="w-1/3 text-center">
-            <p className="font-PottaOne">{pokeEvolutions.map((pokemon:any, idx:number)=> {
+            <p className="font-PottaOne">{pokeEvolutions.map((pokemon:IPokemonData, idx:number)=> {
                 return(
                     <>
                         <div key={idx}>
                             <div>
-                                <img src={pokemon.sprites.other["official-artwork"].front_default} style={{height: '200px', width: '200px', cursor: 'pointer'}} alt='pokemon evolutions'/>
+                                <img src={pokemon.sprites.other["official-artwork"].front_default} style={{height: '200px', width: '200px' }} alt='Poke Evols'/>
                             </div>
                             <div className='text-center'>
                                 {`${pokemon.name[0].toUpperCase()}${pokemon.name.substring(1)}`}
@@ -560,7 +582,8 @@ const DisplayPageComponent = () => {
                         </div>
                     </>
                 )
-            })}</p>
+            })}
+            </p>
           </div>
           <div className="w-1/3 flex justify-center" />
         </div>
@@ -578,17 +601,19 @@ const DisplayPageComponent = () => {
           <h1 className="font-PottaOne text-black text-2xl pt-8">Ablities:</h1>
           <h1 className="font-PottaOne text-black text-2xl pt-8">Moves:</h1>
           <h1 className="font-PottaOne text-black text-2xl pt-20">
-            Evolutions:
+            Evolutions: <span>&#x2191;</span> and <span>&#x2193;</span> Scroll
           </h1>
         </div>
-        <div className="overflow-hidden flex-1 pl-28 pt-24">
+        <div className="flex-1 pl-28 pt-24">
           <p className="h-12 font-PottaOne text-black text-2xl mb-4 overflow-y-auto">
           {pokemonType.map((type:IPokeType, idx:number) => {
                     return (
                         <>
-                           {<span key={idx}>{`${type.type.name[0].toUpperCase()+type.type.name.substring(1)}`}
+                           {
+                            <span key={idx}>{`${type.type.name[0].toUpperCase()+type.type.name.substring(1)}`}
                            {idx !== pokemonType.length - 1 && ', '}
-                           </span>}
+                           </span>
+                           }
                         </>
                     )
                 })}
@@ -600,8 +625,10 @@ const DisplayPageComponent = () => {
           {pokeAbilities.map((ability:IPokeAbilities, idx:number) => {
                             return(
                                 <>
-                                {<span key={idx}>{`${ability.ability.name}`}
-                                {idx !== pokeAbilities.length - 1 && ', '}</span>}
+                                {
+                                <span key={idx}>{`${ability.ability.name}`}
+                                {idx !== pokeAbilities.length - 1 && ', '}</span>
+                                }
                                 </>
                             )
                         })}
@@ -610,8 +637,10 @@ const DisplayPageComponent = () => {
           {pokeMoves.map((move:IPokeMoves, idx:number) => {
                                 return (
                                     <>
-                                    {<span key={idx}>{`${move.move.name}`}
-                                    {idx !== pokeMoves.length - 1 && ', '}</span>}
+                                    {
+                                    <span key={idx}>{`${move.move.name}`}
+                                    {idx !== pokeMoves.length - 1 && ', '}</span>
+                                    }
                                     </>
                                 )
                         })}
@@ -621,12 +650,12 @@ const DisplayPageComponent = () => {
       <div className="pt-10 w-full">
         <div className="h-56 overflow-x-auto">
           <div className="w-1/3 text-center">
-            <p className="font-PottaOne">{pokeEvolutions.map((pokemon:any, idx:number)=> {
+            <p className="font-PottaOne">{pokeEvolutions.map((pokemon:IPokemonData, idx:number)=> {
                 return(
                     <>
                         <div key={idx}>
                             <div>
-                                <img src={pokemon.sprites.other["official-artwork"].front_default} style={{height: '200px', width: '200px', cursor: 'pointer'}} alt='pokemon evolutions'/>
+                                <img src={pokemon.sprites.other["official-artwork"].front_default} style={{height: '200px', width: '200px' }} alt='Poke Evols'/>
                             </div>
                             <div className='text-center font-PottaOne'>
                                 {`${pokemon.name[0].toUpperCase()}${pokemon.name.substring(1)}`}
@@ -644,37 +673,33 @@ const DisplayPageComponent = () => {
 
 
 
-<div className={`${addToFavs} transition-transform fixed top-0 left-0 z-40 h-screen p-4 overflow-y-auto bg-white w-80 dark:bg-gray-800`}>
+<div className={`${addToFavs} transition-transform fixed  p-4 overflow-y-auto bg-white w-80 dark:bg-gray-800 top-0 left-0 z-40 h-screen`}>
         <p className="text-[30px] mb-7 font-PottaOne">Favorites</p>
-        <button onClick={openFavorites} type="button" data-drawer-hide="drawer-example" aria-controls="drawer-example" className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 absolute top-6 end-2.5 flex items-center justify-center dark:hover:bg-gray-600 dark:hover:text-white" >
+
+        <button onClick={accessFavorites} type="button" data-drawer-hide="drawer-example" aria-controls="drawer-example" className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 absolute top-6 end-2.5 flex items-center justify-center dark:hover:bg-gray-600 dark:hover:text-white" >
+
             <svg className="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
                 <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
             </svg>
+
             <span className="sr-only">Close menu</span>
+
         </button>
-        {favoriteDisplay.map((favorite:any, idx:number) => {
+        {favoriteDisplay.map((favorite:IPokemonData, idx:number) => {
         return(
             <>
-                <div key={idx} onClick={()=> {
-                    setSavedInput(favorite.id);
-                    onLoadPage();
-                }} className='rounded-2xl flex items-center justify-between text-[20px] mb-5 font-PottaOne bg-yellow-300 ' style={{height: '58px', paddingLeft: '10px', paddingRight: '10px'}}>
+                <div key={idx} onClick={()=> { setsavedDataInput(favorite.name); onLoadPage(); }} className='rounded-2xl hover:text-white flex items-center justify-between text-[20px] mb-5 font-PottaOne bg-yellow-300 ' style={{height: '58px', paddingLeft: '10px', paddingRight: '10px'}}>
                     {`${favorite.name[0].toUpperCase()}${favorite.name.substring(1)} #${favorite.id}`}
-                    <p className='text-red-600' onClick={()=> {
-                        removeFromLocalStorage(`${favorite.id}`);
-                        onLoadPage();
-                    }}>X</p>
+
+                    <p className='text-red-600 hover:text-black' onClick={()=> { removeFromLocalStorage(`${favorite.id}`); onLoadPage(); }} >X</p>
                 </div>
             </>
         )
     })
     
-
 }
-    </div>
-
+</div>
 </>
-
   )
 }
 

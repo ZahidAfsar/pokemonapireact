@@ -1,41 +1,51 @@
-const getPokeFetch = async (pokemon:string) => {
+import { IPokemonData, IPokeSpecies, IEvolutionData, ILocationData } from "../Interfaces/Interface";
+
+export const getPokeEvolutionsFetch = async (pokemon:string) => {
+    const promise = await fetch (`https://pokeapi.co/api/v2/pokemon-species/${pokemon}`);
+
+    const data: IPokeSpecies = await promise.json();
+
+    const promiseOne = await fetch(data.evolution_chain.url);
+    
+    const dataOne:IEvolutionData = await promiseOne.json();
+
+    return dataOne;
+}
+
+export const getPokeFetch = async (pokemon:string) => {
     
     const promiseOne = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${pokemon}`);
-    const promiseOneData: any = await promiseOne.json();
 
+    const promiseOneData: IPokeSpecies = await promiseOne.json();
 
     const promise = await fetch(`https://pokeapi.co/api/v2/pokemon/${promiseOneData.id}`);
-    const data:any = promise.json();
 
+    const data: IPokemonData = await  promise.json();
 
     return data;
 
 }
 
-const pokeLocationFetch = async (pokemon:string) => {
+export const getPokeName = async (pokemon:string) => {
     const promiseOne = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${pokemon}`);
-    const promiseOneData = await promiseOne.json();
 
-    const promise = await fetch(`https://pokeapi.co/api/v2/pokemon/${promiseOneData.id}/encounters`);
-    const data:any = await promise.json();
-    return data;
-    
-}
+    const promiseOneData: IPokeSpecies = await promiseOne.json();
 
-const getPokeName = async (pokemon:string) => {
-    const promiseOne = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${pokemon}`);
-    const promiseOneData = await promiseOne.json();
     return promiseOneData;
 }
 
-const getPokeEvolutionsFetch = async (pokemon:string) => {
-    const promise = await fetch (`https://pokeapi.co/api/v2/pokemon-species/${pokemon}`);
-    const data = await promise.json();
 
-    const promise2 = await fetch(data.evolution_chain.url);
-    const data2 = await promise2.json();
+export const pokeLocationFetch = async (pokemon:string) => {
+    const promiseOne = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${pokemon}`);
 
-    return data2;
+    const promiseOneData: IPokeSpecies = await promiseOne.json();
+
+    const promise = await fetch(`https://pokeapi.co/api/v2/pokemon/${promiseOneData.id}/encounters`);
+
+    const data:ILocationData[] = await promise.json();
+
+    return data;
+    
 }
 
-export {getPokeFetch, pokeLocationFetch, getPokeName, getPokeEvolutionsFetch}
+
